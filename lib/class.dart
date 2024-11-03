@@ -22,18 +22,6 @@ class User {
   void logout() {}
 }
 
-class SingleChoice {
-  int answerID;
-  String correctAnswer;
-  SingleChoice({required this.answerID, required this.correctAnswer});
-}
-
-class MultiChoice {
-  int answerID;
-  List<String> correctAnswer;
-  MultiChoice({required this.answerID, required this.correctAnswer});
-}
-
 enum Type { SingleChoice, Multichoice }
 
 class Question {
@@ -42,8 +30,8 @@ class Question {
   double Score;
   Type type;
   List<String> option = [];
-  SingleChoice? singleChoice;
-  MultiChoice? multiChoice;
+  String? singleChoice;
+  List<String>? multiChoice = [];
   Question(
       {required this.questionId,
       required this.questionText,
@@ -67,10 +55,10 @@ class Quiz {
     for (var questions in question) {
       if (questions.type == Type.SingleChoice) {
         print(
-            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.singleChoice?.correctAnswer} \n Option are ${questions.option}");
+            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.singleChoice} \n Option are ${questions.option}");
       } else if (questions.type == Type.Multichoice) {
         print(
-            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.multiChoice?.correctAnswer} \n Option are ${questions.option}");
+            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.multiChoice} \n Option are ${questions.option}");
       }
     }
   }
@@ -83,34 +71,33 @@ class Result {
   Result({required this.scores, required this.user, required this.quiz});
 }
 
-void main() {
-  // User user =
-  //     User("firstName", "lastName", username: "admin", password: "password");
-  // print("Username is ${user.username} , Password is ${user.password}");
-  // print(user.login("adsmin", "Passsword"));
+// void main() {
+//   // User user =
+//   //     User("firstName", "lastName", username: "admin", password: "password");
+//   // print("Username is ${user.username} , Password is ${user.password}");
+//   // print(user.login("adsmin", "Passsword"));
 
-  Question question1 = Question(
-      questionId: 1,
-      questionText: "questionText1",
-      type: Type.SingleChoice,
-      Score: 5,
-      singleChoice: SingleChoice(answerID: 1, correctAnswer: "correctAnswer"),
-      option: ["hello1", "hi1"]);
+//   Question question1 = Question(
+//       questionId: 1,
+//       questionText: "questionText1",
+//       type: Type.SingleChoice,
+//       Score: 5,
+//       singleChoice: "correctAnswer",
+//       option: ["hello1", "hi1"]);
 
-  Question question2 = Question(
-      questionId: 2,
-      questionText: "questionText2",
-      type: Type.Multichoice,
-      Score: 15,
-      multiChoice: MultiChoice(
-          answerID: 1, correctAnswer: ["correctAnswer1", "correctAnswer2"]),
-      option: ["hello1", "hi1"]);
+//   Question question2 = Question(
+//       questionId: 2,
+//       questionText: "questionText2",
+//       type: Type.Multichoice,
+//       Score: 15,
+//       multiChoice: ["correctAnswer1", "correctAnswer2"],
+//       option: ["hello1", "hi1"]);
 
-  // Question question2 = Question(
-  //     questionId: 2, questionText: "questionText2", option: ["hello2", "hi2"]);
-  Quiz quiz = Quiz(title: "hello");
-  quiz.addQuestion(question1);
-  quiz.addQuestion(question2);
-  // quiz.addQuestion(question2);
-  quiz.show();
-}
+//   // Question question2 = Question(
+//   //     questionId: 2, questionText: "questionText2", option: ["hello2", "hi2"]);
+//   Quiz quiz = Quiz(title: "hello");
+//   quiz.addQuestion(question1);
+//   quiz.addQuestion(question2);
+//   // quiz.addQuestion(question2);
+//   quiz.show();
+// }
