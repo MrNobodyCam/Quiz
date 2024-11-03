@@ -4,8 +4,8 @@ import 'dart:io';
 class User {
   String firstName;
   String lastName;
-  String _username;
-  String _password;
+  final String _username;
+  final String _password;
 
   User(this.firstName, this.lastName,
       {required String username, required String password})
@@ -105,39 +105,51 @@ class Question {
 }
 
 class Quiz {
-  List<Question> questions = [];
   String title;
+  User creator;
+  List<Question> questions = [];
 
-  Quiz({required this.title});
+  Quiz({required this.title, required this.creator});
 
-  void addQuestion(Question newQuestion) {
-    questions.add(newQuestion);
+  void addQuestion(Question question) {
+    questions.add(question);
   }
 
-  void show() {
-    print("Quiz Name: $title\n");
-    for (var question in questions) {
-      if (question.type == Type.SingleChoice) {
-        print(
-            "Question ID: ${question.questionId} \nText: ${question.questionText} \nType: ${question.type} \nScore: ${question.Score} \nCorrect Answer: ${question.singleChoice} \nOptions: ${question.option}");
-      } else if (question.type == Type.Multichoice) {
-        print(
-            "Question ID: ${question.questionId} \nText: ${question.questionText} \nType: ${question.type} \nScore: ${question.Score} \nCorrect Answers: ${question.multiChoice} \nOptions: ${question.option}");
-      }
+  Future<void> saveToFile(String filePath) async {
+    final file = File(filePath);
+    List<Quiz> quizzes = await loadQuizzes(filePath);
+    quizzes.add(this);
+    await file.writeAsString(
+        jsonEncode(quizzes.map((quiz) => quiz.toJson()).toList()));
+  }
+
+  static Future<List<Quiz>> loadQuizzes(String filePath) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      final jsonString = await file.readAsString();
+      return (jsonDecode(jsonString) as List)
+          .map((quizJson) => Quiz.fromJson(quizJson))
+          .toList();
     }
+    return [];
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
+      'creator': creator.toJson(),
       'questions': questions.map((question) => question.toJson()).toList(),
     };
   }
 
   static Quiz fromJson(Map<String, dynamic> json) {
-    Quiz quiz = Quiz(title: json['title']);
-    quiz.questions =
-        (json['questions'] as List).map((q) => Question.fromJson(q)).toList();
+    Quiz quiz = Quiz(
+      title: json['title'],
+      creator: User.fromJson(json['creator']),
+    );
+    for (var questionJson in json['questions']) {
+      quiz.addQuestion(Question.fromJson(questionJson));
+    }
     return quiz;
   }
 }
@@ -147,84 +159,38 @@ class Answer {
   String? singleAnswer;
   List<String>? multipleAnswer;
 
-  Answer({
-    required this.questionId,
-    this.singleAnswer,
-    this.multipleAnswer,
-  });
+  Answer({required this.questionId, this.singleAnswer, this.multipleAnswer});
 }
 
-// Result Class
 class Result {
-  double score = 0;
-  Answer answer;
+  List<Answer> answer;
   String username;
 
   Result({required this.answer, required this.username});
 
   void checkAnswer(List<Question> questions) {
-    for (var question in questions) {
-      if (answer.questionId == question.questionId) {
-        if (question.type == Type.SingleChoice &&
-            answer.singleAnswer == question.singleChoice) {
-          score += question.Score;
-          print("Correct Answer for Question ID: ${question.questionId}");
-        } else if (question.type == Type.Multichoice &&
-            answer.multipleAnswer != null &&
-            compareAnswers(answer.multipleAnswer!, question.multiChoice!)) {
-          score += question.Score;
-          print("Correct Answer for Question ID: ${question.questionId}");
-        } else {
-          print(
-              "Incorrect Question ${answer.questionId} answer is ${question.singleChoice}");
-        }
+    double totalScore = 0;
+    for (var answer in answer) {
+      Question? question =
+          questions.firstWhere((q) => q.questionId == answer.questionId);
+      if (question.type == Type.SingleChoice &&
+          answer.singleAnswer == question.singleChoice) {
+        totalScore += question.Score;
+      } else if (question.type == Type.Multichoice &&
+          answer.multipleAnswer!
+              .toSet()
+              .containsAll(question.multiChoice!.toSet())) {
+        totalScore += question.Score;
       }
     }
-  }
-
-  bool compareAnswers(List<String> userAnswers, List<String> correctAnswers) {
-    return Set.from(userAnswers).containsAll(correctAnswers) &&
-        userAnswers.length == correctAnswers.length;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'score': score,
-      'answer': {
-        'questionId': answer.questionId,
-        'singleAnswer': answer.singleAnswer,
-        'multipleAnswer': answer.multipleAnswer,
-      },
-      'username': username,
-    };
-  }
-
-  static Result fromJson(Map<String, dynamic> json) {
-    return Result(
-      answer: Answer(
-        questionId: json['answer']['questionId'],
-        singleAnswer: json['answer']['singleAnswer'],
-        multipleAnswer: json['answer']['multipleAnswer'] != null
-            ? List<String>.from(json['answer']['multipleAnswer'])
-            : null,
-      ),
-      username: json['username'],
-    );
+    print("Total score for $username: $totalScore");
   }
 
   void displayResult() {
-    print("Username: $username, Score: $score");
-  }
-}
-
-// Total Class
-class Total {
-  List<Result> results;
-
-  Total(this.results);
-
-  void calculateTotalScore() {
-    double totalScore = results.fold(0, (sum, result) => sum + result.score);
-    print("Total Score: $totalScore");
+    print("\nResults for $username:");
+    for (var answer in answer) {
+      print(
+          "Question ID: ${answer.questionId}, Your answer: ${answer.singleAnswer ?? answer.multipleAnswer}");
+    }
   }
 }
