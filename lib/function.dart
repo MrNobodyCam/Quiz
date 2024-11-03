@@ -1,56 +1,47 @@
-import 'class.dart';
+import 'dart:convert';
 import 'dart:io';
+import 'class.dart';
 
-void inputQuestion() {
-  stdout.write("Input Question Text: ");
-  String? text = stdin.readLineSync();
+Future<void> saveQuizToFile(Quiz quiz, String filePath) async {
+  final file = File(filePath);
+  await file.writeAsString(jsonEncode(quiz.toJson()));
+  print('Quiz saved to file: $filePath');
+}
 
-  stdout.write(
-      "Input Question Type \"1\" = SingleChoice/ \"2\" = Multichoice ): ");
-  String? Qtype = stdin.readLineSync();
+Future<Quiz?> loadQuizFromFile(String filePath) async {
+  final file = File(filePath);
+  if (await file.exists()) {
+    final jsonString = await file.readAsString();
+    return Quiz.fromJson(jsonDecode(jsonString));
+  } else {
+    print('File not found: $filePath');
+    return null;
+  }
+}
 
-  stdout.write("Input Question Score: ");
-  double? score = double.tryParse(stdin.readLineSync() ?? '');
+Future<void> saveResultToFile(Result result, String filePath) async {
+  final file = File(filePath);
+  var results = [];
 
-  Type? type;
-  String? singleChoice;
-  List<String>? multiChoice = [];
-  List<String> options = [];
-
-  if (Qtype == '1') {
-    type = Type.SingleChoice;
-    stdout.write("Input Answer: ");
-    String? answer = stdin.readLineSync();
-    if (answer != null) {
-      singleChoice = answer;
-    }
-  } else if (Qtype == '2') {
-    type = Type.Multichoice;
-    stdout.write("Input Answers (comma-separated): ");
-    String? answerInput = stdin.readLineSync();
-    List<String> answers = answerInput?.split(',') ?? ["none"];
-
-    if (answers.isNotEmpty) {
-      multiChoice = answers;
-    }
+  if (await file.exists()) {
+    final jsonString = await file.readAsString();
+    results = jsonDecode(jsonString);
   }
 
-  stdout.write("Input Options (comma-separated): ");
-  String? optionInput = stdin.readLineSync();
-  options = optionInput?.split(',') ?? [];
+  results.add(result.toJson());
+  await file.writeAsString(jsonEncode(results));
+  print('Results saved to file: $filePath');
+}
 
-  // Creating the Question instance
-  Question question = Question(
-    questionText: text ?? "Default Text",
-    type: type ?? Type.SingleChoice,
-    Score: score ?? 0.0,
-    option: options,
-    singleChoice: singleChoice,
-    multiChoice: multiChoice,
-  );
-  Quiz quiz = Quiz(title: "hello");
-  quiz.addQuestion(question);
-  quiz.show();
-  // Answer answer = Answer();
-  // answer.checkAnswer();
+Future<List<Result>> loadResultsFromFile(String filePath) async {
+  final file = File(filePath);
+  if (await file.exists()) {
+    final jsonString = await file.readAsString();
+    return (jsonDecode(jsonString) as List)
+        .map((resultJson) => Result.fromJson(resultJson))
+        .toList();
+  } else {
+    print('File not found: $filePath');
+    return [];
+  }
 }
