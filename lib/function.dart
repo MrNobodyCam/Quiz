@@ -2,9 +2,6 @@ import 'class.dart';
 import 'dart:io';
 
 void inputQuestion() {
-  stdout.write("Input Question ID: ");
-  int? id = int.tryParse(stdin.readLineSync() ?? '');
-
   stdout.write("Input Question Text: ");
   String? text = stdin.readLineSync();
 
@@ -44,7 +41,6 @@ void inputQuestion() {
 
   // Creating the Question instance
   Question question = Question(
-    questionId: id ?? 0,
     questionText: text ?? "Default Text",
     type: type ?? Type.SingleChoice,
     Score: score ?? 0.0,
@@ -55,4 +51,6 @@ void inputQuestion() {
   Quiz quiz = Quiz(title: "hello");
   quiz.addQuestion(question);
   quiz.show();
+  // Answer answer = Answer();
+  // answer.checkAnswer();
 }

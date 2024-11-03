@@ -1,5 +1,5 @@
-import 'function.dart';
+// import 'function.dart';
 
-void main() {
-  inputQuestion();
-}
+// void main() {
+//   inputQuestion();
+// }

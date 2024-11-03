@@ -12,11 +12,7 @@ class User {
   get password => _password;
 
   bool login(String newUsername, String newPassword) {
-    if (newUsername != username || newPassword != password) {
-      return false;
-    } else {
-      return true;
-    }
+    return newUsername == username && newPassword == password;
   }
 
   void logout() {}
@@ -25,79 +21,135 @@ class User {
 enum Type { SingleChoice, Multichoice }
 
 class Question {
+  static int _idCounter = 0;
+
   int questionId;
   String questionText;
   double Score;
   Type type;
-  List<String> option = [];
+  List<String> option;
   String? singleChoice;
-  List<String>? multiChoice = [];
-  Question(
-      {required this.questionId,
-      required this.questionText,
-      required this.type,
-      required this.Score,
-      required this.option,
-      this.singleChoice,
-      this.multiChoice});
+  List<String>? multiChoice;
+
+  Question({
+    required this.questionText,
+    required this.type,
+    required this.Score,
+    required this.option,
+    this.singleChoice,
+    this.multiChoice,
+  }) : questionId = ++_idCounter;
 }
 
 class Quiz {
-  List<Question> question = [];
+  List<Question> questions = [];
   String title;
+
   Quiz({required this.title});
+
   void addQuestion(Question newQuestion) {
-    this.question.add(newQuestion);
+    questions.add(newQuestion);
   }
 
   void show() {
-    print("Quiz Name :  ${title} : \n");
-    for (var questions in question) {
-      if (questions.type == Type.SingleChoice) {
+    print("Quiz Name :  $title : \n");
+    for (var question in questions) {
+      if (question.type == Type.SingleChoice) {
         print(
-            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.singleChoice} \n Option are ${questions.option}");
-      } else if (questions.type == Type.Multichoice) {
+            "Question ID: ${question.questionId} \n Text: ${question.questionText} \n Type: ${question.type} \n Score: ${question.Score} \n Correct Answer: ${question.singleChoice} \n Options: ${question.option}");
+      } else if (question.type == Type.Multichoice) {
         print(
-            "Question ID is ${questions.questionId} \n Text is ${questions.questionText} \n Type is ${questions.type} \n Score is ${questions.Score} \n Correct Answer is ${questions.multiChoice} \n Option are ${questions.option}");
+            "Question ID: ${question.questionId} \n Text: ${question.questionText} \n Type: ${question.type} \n Score: ${question.Score} \n Correct Answers: ${question.multiChoice} \n Options: ${question.option}");
       }
     }
   }
 }
 
-class Result {
-  int scores;
-  User user;
-  Quiz quiz;
-  Result({required this.scores, required this.user, required this.quiz});
+class Answer {
+  int questionId;
+  String? singleAnswer;
+  List<String>? multipleAnswer;
+
+  Answer({
+    required this.questionId,
+    this.singleAnswer,
+    this.multipleAnswer,
+  });
 }
 
-// void main() {
-//   // User user =
-//   //     User("firstName", "lastName", username: "admin", password: "password");
-//   // print("Username is ${user.username} , Password is ${user.password}");
-//   // print(user.login("adsmin", "Passsword"));
+class Result {
+  double score = 0;
+  Answer answer;
 
-//   Question question1 = Question(
-//       questionId: 1,
-//       questionText: "questionText1",
-//       type: Type.SingleChoice,
-//       Score: 5,
-//       singleChoice: "correctAnswer",
-//       option: ["hello1", "hi1"]);
+  Result({required this.answer});
 
-//   Question question2 = Question(
-//       questionId: 2,
-//       questionText: "questionText2",
-//       type: Type.Multichoice,
-//       Score: 15,
-//       multiChoice: ["correctAnswer1", "correctAnswer2"],
-//       option: ["hello1", "hi1"]);
+  void checkAnswer(List<Question> questions) {
+    for (var question in questions) {
+      if (answer.questionId == question.questionId) {
+        if (question.type == Type.SingleChoice &&
+            answer.singleAnswer == question.singleChoice) {
+          score += question.Score;
+          print("Correct Answer for Question ID: ${question.questionId}");
+        } else if (question.type == Type.Multichoice &&
+            answer.multipleAnswer != null &&
+            compareAnswers(answer.multipleAnswer!, question.multiChoice!)) {
+          score += question.Score;
+          print("Correct Answer for Question ID: ${question.questionId}");
+        } else {
+          print(
+              "Incorrect Question ${answer.questionId} answer is ${question.singleChoice}");
+        }
+      }
+    }
+  }
 
-//   // Question question2 = Question(
-//   //     questionId: 2, questionText: "questionText2", option: ["hello2", "hi2"]);
-//   Quiz quiz = Quiz(title: "hello");
-//   quiz.addQuestion(question1);
-//   quiz.addQuestion(question2);
-//   // quiz.addQuestion(question2);
-//   quiz.show();
-// }
+  bool compareAnswers(List<String> userAnswers, List<String> correctAnswers) {
+    return Set.from(userAnswers).containsAll(correctAnswers) &&
+        userAnswers.length == correctAnswers.length;
+  }
+}
+
+class Total {
+  List<Result> results;
+
+  Total(this.results);
+
+  void calculateTotalScore() {
+    double totalScore = results.fold(0, (sum, result) => sum + result.score);
+    print("Total Score: $totalScore");
+  }
+}
+
+void main() {
+  Question question1 = Question(
+      questionText: "What is the capital of France?",
+      type: Type.SingleChoice,
+      Score: 5,
+      singleChoice: "Paris",
+      option: ["Paris", "London", "Berlin", "Madrid"]);
+
+  Question question2 = Question(
+      questionText: "Select fruits",
+      type: Type.Multichoice,
+      Score: 10,
+      multiChoice: ["Apple", "Banana"],
+      option: ["Apple", "Banana", "Carrot", "Onion"]);
+
+  Quiz quiz = Quiz(title: "Geography and Food Quiz");
+  quiz.addQuestion(question1);
+  quiz.addQuestion(question2);
+
+  Answer answer1 =
+      Answer(questionId: question1.questionId, singleAnswer: "London");
+  Answer answer2 = Answer(
+      questionId: question2.questionId, multipleAnswer: ["Apple", "Banana"]);
+
+  Result result1 = Result(answer: answer1);
+  Result result2 = Result(answer: answer2);
+
+  result1.checkAnswer(quiz.questions);
+  result2.checkAnswer(quiz.questions);
+  Total total = Total([result1, result2]);
+  total.calculateTotalScore();
+  // quiz.show();
+}
